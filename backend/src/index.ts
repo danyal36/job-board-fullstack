@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 
 import { errorHandler } from './middleware/error.middleware';
 import { notFound } from './middleware/notFound.middleware';
+import { createJobIndex } from './config/elasticsearch';
 import authRoutes from './routes/auth.routes';
 import jobRoutes from './routes/job.routes';
 import companyRoutes from './routes/company.routes';
@@ -38,8 +39,9 @@ app.use('/api/applications', applicationRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  createJobIndex().catch(err => console.error('ES index init failed:', err.message));
 });
 
 export default app;

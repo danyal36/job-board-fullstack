@@ -1,6 +1,8 @@
+import type { QueryDslQueryContainer, SortCombinations } from '@elastic/elasticsearch/lib/api/types';
 import { prisma } from '../config/database';
 import { elasticClient, JOB_INDEX } from '../config/elasticsearch';
 import { AppError } from '../middleware/error.middleware';
+import type { CreateJobInput, UpdateJobInput } from '../validators/job.validator';
 
 interface GetJobsParams {
   page: number;
@@ -23,7 +25,7 @@ interface SearchJobsParams {
 }
 
 export const getJobs = async ({ page, limit, type, remote, location }: GetJobsParams) => {
-  const where: any = { status: 'ACTIVE' };
+  const where: Record<string, unknown> = { status: 'ACTIVE' };
   if (type) where.type = type;
   if (remote !== undefined) where.remote = remote;
   if (location) where.location = { contains: location, mode: 'insensitive' };
@@ -55,8 +57,8 @@ export const searchJobs = async (params: SearchJobsParams) => {
   const { query, location, type, remote, salaryMin, salaryMax, skills, page, limit } = params;
   const from = (page - 1) * limit;
 
-  const must: any[] = [{ term: { status: 'ACTIVE' } }];
-  const filter: any[] = [];
+  const must: QueryDslQueryContainer[] = [{ term: { status: 'ACTIVE' } }];
+  const filter: QueryDslQueryContainer[] = [];
 
   if (query) {
     must.push({
@@ -72,12 +74,12 @@ export const searchJobs = async (params: SearchJobsParams) => {
   if (remote !== undefined) filter.push({ term: { remote } });
   if (location) filter.push({ match: { location } });
   if (skills?.length) filter.push({ terms: { skills } });
-  if (salaryMin || salaryMax) {
+  if (salaryMin !== undefined || salaryMax !== undefined) {
     filter.push({
       range: {
         salaryMin: {
-          ...(salaryMin && { gte: salaryMin }),
-          ...(salaryMax && { lte: salaryMax }),
+          ...(salaryMin !== undefined && { gte: salaryMin }),
+          ...(salaryMax !== undefined && { lte: salaryMax }),
         },
       },
     });
@@ -88,13 +90,14 @@ export const searchJobs = async (params: SearchJobsParams) => {
     from,
     size: limit,
     query: { bool: { must, filter } },
-    sort: [{ _score: 'desc' }, { createdAt: 'desc' }],
+    sort: [{ _score: 'desc' }, { createdAt: 'desc' }] as SortCombinations[],
   });
 
   const hits = response.hits.hits;
-  const total = typeof response.hits.total === 'number'
-    ? response.hits.total
-    : response.hits.total?.value ?? 0;
+  const total =
+    typeof response.hits.total === 'number'
+      ? response.hits.total
+      : (response.hits.total?.value ?? 0);
 
   return {
     jobs: hits.map(h => h._source),
@@ -105,7 +108,7 @@ export const searchJobs = async (params: SearchJobsParams) => {
   };
 };
 
-export const createJob = async (data: any, userId: string) => {
+export const createJob = async (data: CreateJobInput, userId: string) => {
   const company = await prisma.company.findUnique({ where: { ownerId: userId } });
   if (!company) throw new AppError('You must create a company first', 400);
 
@@ -114,7 +117,6 @@ export const createJob = async (data: any, userId: string) => {
     include: { company: { select: { name: true } } },
   });
 
-  // Index in Elasticsearch
   await elasticClient.index({
     index: JOB_INDEX,
     id: job.id,
@@ -140,7 +142,7 @@ export const createJob = async (data: any, userId: string) => {
   return job;
 };
 
-export const updateJob = async (id: string, data: any, userId: string) => {
+export const updateJob = async (id: string, data: UpdateJobInput, userId: string) => {
   const job = await prisma.job.findUnique({
     where: { id },
     include: { company: true },
@@ -150,7 +152,6 @@ export const updateJob = async (id: string, data: any, userId: string) => {
 
   const updated = await prisma.job.update({ where: { id }, data });
 
-  // Update Elasticsearch
   await elasticClient.update({
     index: JOB_INDEX,
     id,
@@ -170,6 +171,5 @@ export const deleteJob = async (id: string, userId: string) => {
 
   await prisma.job.delete({ where: { id } });
 
-  // Remove from Elasticsearch
   await elasticClient.delete({ index: JOB_INDEX, id });
 };
