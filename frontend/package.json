@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Job board frontend — React 18 + TypeScript + Tailwind",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
