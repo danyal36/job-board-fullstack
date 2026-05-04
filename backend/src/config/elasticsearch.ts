@@ -1,7 +1,26 @@
-import { Client } from '@elastic/elasticsearch';
+import { Client, Transport } from '@elastic/elasticsearch';
+import type { TransportOptions } from '@elastic/transport';
+
+// OpenSearch does not recognise the ES8 vendor Content-Type headers.
+// Override them with standard application/json via a custom Transport.
+class OpenSearchTransport extends Transport {
+  constructor(opts: TransportOptions) {
+    super({
+      ...opts,
+      // OpenSearch: disable product header check and vendor content-type
+      productCheck: undefined,
+      vendoredHeaders: {
+        jsonContentType: 'application/json',
+        ndjsonContentType: 'application/x-ndjson',
+        accept: 'application/json,text/plain',
+      },
+    });
+  }
+}
 
 export const elasticClient = new Client({
   node: process.env.ELASTICSEARCH_URL || 'http://localhost:9200',
+  Transport: OpenSearchTransport,
 });
 
 export const JOB_INDEX = 'jobs';

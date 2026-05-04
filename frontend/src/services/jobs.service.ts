@@ -16,7 +16,14 @@ export const jobsService = {
   },
 
   searchJobs: async (params: SearchParams): Promise<ApiResponse<JobsResponse>> => {
-    const { data } = await api.get('/jobs/search', { params });
+    const { query, skills, ...rest } = params;
+    const { data } = await api.get('/jobs/search', {
+      params: {
+        ...rest,
+        ...(query && { q: query }),
+        ...(skills?.length && { skills: skills.join(',') }),
+      },
+    });
     return data;
   },
 

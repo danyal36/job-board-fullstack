@@ -1,17 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { jobsService } from '../services/jobs.service';
 import { JobCard } from '../components/JobCard';
+import { SearchBar } from '../components/SearchBar';
+import { FilterSidebar, INITIAL_FILTERS } from '../components/FilterSidebar';
+import { Pagination } from '../components/Pagination';
+import { useDebounce } from '../hooks/useDebounce';
+import type { JobType, SearchFilters, SearchParams } from '../types';
 
 const PAGE_SIZE = 10;
 
+function toApiParams(query: string, f: SearchFilters, page: number): SearchParams {
+  return {
+    ...(query && { query }),
+    ...(f.location && { location: f.location }),
+    ...(f.type && { type: f.type as JobType }),
+    ...(f.remote && { remote: true }),
+    ...(f.salaryMin && { salaryMin: f.salaryMin }),
+    ...(f.salaryMax && { salaryMax: f.salaryMax }),
+    ...(f.skills.length && { skills: f.skills }),
+    page,
+    limit: PAGE_SIZE,
+  };
+}
+
 export default function JobsPage() {
+  const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState<SearchFilters>(INITIAL_FILTERS);
   const [page, setPage] = useState(1);
+  const debouncedQuery = useDebounce(query, 400);
+
+  useEffect(() => { setPage(1); }, [debouncedQuery]);
 
   const { data, isPending, isError, error, isFetching } = useQuery({
-    queryKey: ['jobs', { page, limit: PAGE_SIZE }],
-    queryFn: () => jobsService.getJobs({ page, limit: PAGE_SIZE }),
+    queryKey: ['jobs-search', debouncedQuery, filters, page],
+    queryFn: () => jobsService.searchJobs(toApiParams(debouncedQuery, filters, page)),
     placeholderData: keepPreviousData,
   });
 
@@ -19,80 +42,55 @@ export default function JobsPage() {
   const total = data?.data.total ?? 0;
   const totalPages = data?.data.totalPages ?? 0;
 
+  const handleFilterChange = (f: SearchFilters) => {
+    setFilters(f);
+    setPage(1);
+  };
+
   return (
     <section>
-      <header className="mb-6 flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Jobs</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            {isPending ? 'Loading…' : `${total} role${total === 1 ? '' : 's'} available`}
-          </p>
-        </div>
+      <header className="mb-4">
+        <h1 className="text-2xl font-semibold text-slate-900">Find your next role</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {isPending ? 'Searching…' : `${total} role${total === 1 ? '' : 's'} found`}
+        </p>
       </header>
 
-      {isPending ? (
-        <JobListSkeleton />
-      ) : isError ? (
-        <ErrorState message={(error as Error).message} />
-      ) : jobs.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <ul className="grid grid-cols-1 gap-3">
-          {jobs.map((job) => (
-            <li key={job.id}>
-              <JobCard job={job} />
-            </li>
-          ))}
-        </ul>
-      )}
+      <SearchBar value={query} onChange={setQuery} />
 
-      {totalPages > 1 && (
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          isFetching={isFetching}
-          onChange={setPage}
-        />
-      )}
+      <div className="mt-6 flex gap-6">
+        <aside className="w-64 flex-shrink-0 self-start sticky top-6">
+          <FilterSidebar filters={filters} onChange={handleFilterChange} />
+        </aside>
+
+        <div className="min-w-0 flex-1">
+          {isPending ? (
+            <JobListSkeleton />
+          ) : isError ? (
+            <ErrorState message={(error as Error).message} />
+          ) : jobs.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <ul className="grid grid-cols-1 gap-3">
+              {jobs.map((job) => (
+                <li key={job.id}>
+                  <JobCard job={job} />
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {totalPages > 1 && (
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              isFetching={isFetching}
+              onChange={setPage}
+            />
+          )}
+        </div>
+      </div>
     </section>
-  );
-}
-
-function Pagination({
-  page,
-  totalPages,
-  isFetching,
-  onChange,
-}: {
-  page: number;
-  totalPages: number;
-  isFetching: boolean;
-  onChange: (p: number) => void;
-}) {
-  return (
-    <nav className="mt-6 flex items-center justify-between border-t border-slate-200 pt-4">
-      <button
-        type="button"
-        onClick={() => onChange(page - 1)}
-        disabled={page <= 1 || isFetching}
-        className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        Previous
-      </button>
-      <span className="text-sm text-slate-600">
-        Page {page} of {totalPages}
-      </span>
-      <button
-        type="button"
-        onClick={() => onChange(page + 1)}
-        disabled={page >= totalPages || isFetching}
-        className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Next
-        <ChevronRight className="h-4 w-4" />
-      </button>
-    </nav>
   );
 }
 
@@ -100,10 +98,7 @@ function JobListSkeleton() {
   return (
     <ul className="grid grid-cols-1 gap-3">
       {Array.from({ length: 5 }).map((_, i) => (
-        <li
-          key={i}
-          className="h-32 animate-pulse rounded-lg border border-slate-200 bg-white"
-        />
+        <li key={i} className="h-32 animate-pulse rounded-lg border border-slate-200 bg-white" />
       ))}
     </ul>
   );
@@ -113,7 +108,7 @@ function EmptyState() {
   return (
     <div className="rounded-lg border border-dashed border-slate-300 bg-white p-12 text-center">
       <p className="text-sm font-medium text-slate-900">No jobs found</p>
-      <p className="mt-1 text-sm text-slate-500">Check back soon — new roles are posted often.</p>
+      <p className="mt-1 text-sm text-slate-500">Try adjusting your search or filters.</p>
     </div>
   );
 }

@@ -73,3 +73,12 @@ export interface SearchParams {
   page?: number;
   limit?: number;
 }
+
+export interface SearchFilters {
+  location: string;
+  type: JobType | '';
+  remote: boolean;
+  salaryMin: number;
+  salaryMax: number;
+  skills: string[];
+}
