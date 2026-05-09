@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Briefcase, MapPin, Wallet } from 'lucide-react';
 import type { Job } from '../types';
 import { formatJobType, formatSalary } from '../lib/format';
@@ -7,6 +8,10 @@ export function JobCard({ job }: { job: Job }) {
   const companyName = job.company?.name ?? 'Unknown company';
 
   return (
+    <Link
+      to={`/jobs/${job.id}`}
+      className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+    >
     <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -33,5 +38,6 @@ export function JobCard({ job }: { job: Job }) {
         </div>
       </dl>
     </article>
+    </Link>
   );
 }

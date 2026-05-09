@@ -48,6 +48,11 @@ export interface Application {
   createdAt: string;
 }
 
+export interface CreateApplicationPayload {
+  jobId: string;
+  coverLetter: string;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;

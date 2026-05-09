@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, Link } from 'react-router-dom';
 import JobsPage from './pages/JobsPage';
+import JobDetailPage from './pages/JobDetailPage';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/jobs" replace />} />
           <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
