@@ -1,16 +1,27 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Briefcase, Building2, Globe, MapPin, Wallet } from 'lucide-react';
 import { jobsService } from '../services/jobs.service';
 import { Badge } from '../components/Badge';
 import { ApplicationModal } from '../components/ApplicationModal';
 import { formatJobType, formatSalary } from '../lib/format';
+import { useAuthStore } from '../store/auth.store';
 import type { Company } from '../types';
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [isApplyOpen, setApplyOpen] = useState(false);
+
+  const handleApply = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `/jobs/${id}` } });
+      return;
+    }
+    setApplyOpen(true);
+  };
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['job', id],
@@ -55,7 +66,7 @@ export default function JobDetailPage() {
           </div>
           <button
             type="button"
-            onClick={() => setApplyOpen(true)}
+            onClick={handleApply}
             disabled={isClosed}
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
           >

@@ -27,18 +27,28 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email, password) => {
     set({ isLoading: true });
-    const { data } = await api.post('/auth/login', { email, password });
-    localStorage.setItem('accessToken', data.data.accessToken);
-    localStorage.setItem('refreshToken', data.data.refreshToken);
-    set({ user: data.data.user, isAuthenticated: true, isLoading: false });
+    try {
+      const { data } = await api.post('/auth/login', { email, password });
+      localStorage.setItem('accessToken', data.data.accessToken);
+      localStorage.setItem('refreshToken', data.data.refreshToken);
+      set({ user: data.data.user, isAuthenticated: true, isLoading: false });
+    } catch (err) {
+      set({ isLoading: false });
+      throw err;
+    }
   },
 
   register: async (payload) => {
     set({ isLoading: true });
-    const { data } = await api.post('/auth/register', payload);
-    localStorage.setItem('accessToken', data.data.accessToken);
-    localStorage.setItem('refreshToken', data.data.refreshToken);
-    set({ user: data.data.user, isAuthenticated: true, isLoading: false });
+    try {
+      const { data } = await api.post('/auth/register', payload);
+      localStorage.setItem('accessToken', data.data.accessToken);
+      localStorage.setItem('refreshToken', data.data.refreshToken);
+      set({ user: data.data.user, isAuthenticated: true, isLoading: false });
+    } catch (err) {
+      set({ isLoading: false });
+      throw err;
+    }
   },
 
   logout: () => {
