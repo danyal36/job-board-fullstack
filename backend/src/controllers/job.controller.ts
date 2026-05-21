@@ -25,6 +25,15 @@ export const getJobs = async (req: Request, res: Response, next: NextFunction) =
   }
 };
 
+export const getMyJobs = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await jobService.getJobsByOwner(req.userId!);
+    res.json({ success: true, data: result, message: 'Employer jobs fetched' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getJobById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const job = await jobService.getJobById(req.params.id);

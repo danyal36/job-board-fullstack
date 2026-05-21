@@ -38,6 +38,24 @@ export interface Job {
   createdAt: string;
 }
 
+export interface EmployerJob extends Job {
+  applicantCount: number;
+}
+
+export interface JobFormPayload {
+  title: string;
+  description: string;
+  requirements: string[];
+  skills: string[];
+  location: string;
+  remote: boolean;
+  salaryMin?: number;
+  salaryMax?: number;
+  currency: string;
+  type: JobType;
+  status: JobStatus;
+}
+
 export interface Application {
   id: string;
   jobId: string;

@@ -44,6 +44,28 @@ export const getJobs = async ({ page, limit, type, remote, location }: GetJobsPa
   return { jobs, total, page, limit, totalPages: Math.ceil(total / limit) };
 };
 
+export const getJobsByOwner = async (userId: string) => {
+  const company = await prisma.company.findUnique({ where: { ownerId: userId } });
+  if (!company) return { jobs: [], total: 0 };
+
+  const jobs = await prisma.job.findMany({
+    where: { companyId: company.id },
+    include: {
+      company: { select: { name: true, logoUrl: true } },
+      _count: { select: { applications: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return {
+    jobs: jobs.map(j => {
+      const { _count, ...rest } = j;
+      return { ...rest, applicantCount: _count.applications };
+    }),
+    total: jobs.length,
+  };
+};
+
 export const getJobById = async (id: string) => {
   const job = await prisma.job.findUnique({
     where: { id },

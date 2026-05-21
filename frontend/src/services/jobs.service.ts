@@ -1,5 +1,5 @@
 import api from './api';
-import { Job, ApiResponse, SearchParams } from '../types';
+import { Job, ApiResponse, SearchParams, EmployerJob, JobFormPayload } from '../types';
 
 interface JobsResponse {
   jobs: Job[];
@@ -7,6 +7,11 @@ interface JobsResponse {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+interface MyJobsResponse {
+  jobs: EmployerJob[];
+  total: number;
 }
 
 export const jobsService = {
@@ -32,12 +37,17 @@ export const jobsService = {
     return data;
   },
 
-  createJob: async (payload: Partial<Job>): Promise<ApiResponse<Job>> => {
+  getMyJobs: async (): Promise<ApiResponse<MyJobsResponse>> => {
+    const { data } = await api.get('/jobs/me/list');
+    return data;
+  },
+
+  createJob: async (payload: JobFormPayload): Promise<ApiResponse<Job>> => {
     const { data } = await api.post('/jobs', payload);
     return data;
   },
 
-  updateJob: async (id: string, payload: Partial<Job>): Promise<ApiResponse<Job>> => {
+  updateJob: async (id: string, payload: Partial<JobFormPayload>): Promise<ApiResponse<Job>> => {
     const { data } = await api.put(`/jobs/${id}`, payload);
     return data;
   },

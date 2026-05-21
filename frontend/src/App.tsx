@@ -4,6 +4,8 @@ import JobsPage from './pages/JobsPage';
 import JobDetailPage from './pages/JobDetailPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuthStore } from './store/auth.store';
 
 export default function App() {
@@ -24,6 +26,11 @@ export default function App() {
             <Link to="/jobs" className="hover:text-slate-900">
               Jobs
             </Link>
+            {isAuthenticated && user?.role === 'EMPLOYER' && (
+              <Link to="/dashboard" className="hover:text-slate-900">
+                Dashboard
+              </Link>
+            )}
             {isAuthenticated ? (
               <>
                 <span className="font-medium text-slate-800">
@@ -61,6 +68,14 @@ export default function App() {
           <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute roles={['EMPLOYER', 'ADMIN']}>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
