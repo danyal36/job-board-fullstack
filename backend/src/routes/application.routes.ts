@@ -1,5 +1,10 @@
 import { Router } from 'express';
+import { createApplication, getMyApplications } from '../controllers/application.controller';
+import { authenticate, authorise } from '../middleware/auth.middleware';
 
 const router = Router();
-router.get('/', (_req, res) => res.json({ success: true, data: [], message: 'Applications endpoint' }));
+
+router.post('/', authenticate, authorise('JOB_SEEKER'), createApplication);
+router.get('/my', authenticate, authorise('JOB_SEEKER'), getMyApplications);
+
 export default router;

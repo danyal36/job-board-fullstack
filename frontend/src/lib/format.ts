@@ -26,3 +26,11 @@ const jobTypeLabels: Record<JobType, string> = {
 export function formatJobType(type: JobType): string {
   return jobTypeLabels[type] ?? type;
 }
+
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}

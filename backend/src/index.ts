@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.routes';
 import jobRoutes from './routes/job.routes';
 import companyRoutes from './routes/company.routes';
 import applicationRoutes from './routes/application.routes';
+import savedJobRoutes from './routes/savedJob.routes';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/saved-jobs', savedJobRoutes);
 
 // Error handling
 app.use(notFound);

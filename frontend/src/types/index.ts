@@ -71,6 +71,14 @@ export interface CreateApplicationPayload {
   coverLetter: string;
 }
 
+export interface SavedJob {
+  id: string;
+  jobId: string;
+  userId: string;
+  job: Job;
+  createdAt: string;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;

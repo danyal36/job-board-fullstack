@@ -5,6 +5,7 @@ import JobDetailPage from './pages/JobDetailPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import MyApplicationsPage from './pages/MyApplicationsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuthStore } from './store/auth.store';
 
@@ -29,6 +30,11 @@ export default function App() {
             {isAuthenticated && user?.role === 'EMPLOYER' && (
               <Link to="/dashboard" className="hover:text-slate-900">
                 Dashboard
+              </Link>
+            )}
+            {isAuthenticated && user?.role === 'JOB_SEEKER' && (
+              <Link to="/my-applications" className="hover:text-slate-900">
+                My applications
               </Link>
             )}
             {isAuthenticated ? (
@@ -73,6 +79,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['EMPLOYER', 'ADMIN']}>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-applications"
+            element={
+              <ProtectedRoute roles={['JOB_SEEKER']}>
+                <MyApplicationsPage />
               </ProtectedRoute>
             }
           />

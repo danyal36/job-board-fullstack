@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Briefcase, Building2, Globe, MapPin, Wallet } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Bookmark, Briefcase, Building2, Globe, MapPin, Wallet } from 'lucide-react';
+import clsx from 'clsx';
 import { jobsService } from '../services/jobs.service';
+import { savedJobsService } from '../services/savedJobs.service';
 import { Badge } from '../components/Badge';
 import { ApplicationModal } from '../components/ApplicationModal';
 import { formatJobType, formatSalary } from '../lib/format';
@@ -13,7 +15,25 @@ export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const isJobSeeker = isAuthenticated && user?.role === 'JOB_SEEKER';
+  const queryClient = useQueryClient();
   const [isApplyOpen, setApplyOpen] = useState(false);
+
+  const { data: savedData } = useQuery({
+    queryKey: ['saved-jobs'],
+    queryFn: () => savedJobsService.getSavedJobs(),
+    enabled: isJobSeeker,
+  });
+  const isSaved = savedData?.data.some((s) => s.jobId === id) ?? false;
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (isSaved) await savedJobsService.unsaveJob(id!);
+      else await savedJobsService.saveJob(id!);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved-jobs'] }),
+  });
 
   const handleApply = () => {
     if (!isAuthenticated) {
@@ -64,14 +84,33 @@ export default function JobDetailPage() {
               {isClosed && <Badge>Closed</Badge>}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleApply}
-            disabled={isClosed}
-            className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isClosed ? 'Applications closed' : 'Apply now'}
-          </button>
+          <div className="flex items-center gap-2">
+            {isJobSeeker && (
+              <button
+                type="button"
+                onClick={() => saveMutation.mutate()}
+                disabled={saveMutation.isPending}
+                aria-pressed={isSaved}
+                className={clsx(
+                  'inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-60',
+                  isSaved
+                    ? 'border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100'
+                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                )}
+              >
+                <Bookmark className={clsx('h-4 w-4', isSaved && 'fill-current')} />
+                {isSaved ? 'Saved' : 'Save'}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleApply}
+              disabled={isClosed}
+              className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isClosed ? 'Applications closed' : 'Apply now'}
+            </button>
+          </div>
         </div>
 
         <dl className="mt-5 grid grid-cols-1 gap-2 text-sm text-slate-600 sm:grid-cols-2">
