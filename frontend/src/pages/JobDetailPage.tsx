@@ -8,6 +8,7 @@ import { savedJobsService } from '../services/savedJobs.service';
 import { Badge } from '../components/Badge';
 import { ApplicationModal } from '../components/ApplicationModal';
 import { formatJobType, formatSalary } from '../lib/format';
+import { Skeleton } from '../components/ui/Skeleton';
 import { useAuthStore } from '../store/auth.store';
 import type { Company } from '../types';
 
@@ -84,7 +85,7 @@ export default function JobDetailPage() {
               {isClosed && <Badge>Closed</Badge>}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full gap-2 sm:w-auto">
             {isJobSeeker && (
               <button
                 type="button"
@@ -92,7 +93,7 @@ export default function JobDetailPage() {
                 disabled={saveMutation.isPending}
                 aria-pressed={isSaved}
                 className={clsx(
-                  'inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-60',
+                  'inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none',
                   isSaved
                     ? 'border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100'
                     : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
@@ -106,7 +107,7 @@ export default function JobDetailPage() {
               type="button"
               onClick={handleApply}
               disabled={isClosed}
-              className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-1 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
             >
               {isClosed ? 'Applications closed' : 'Apply now'}
             </button>
@@ -222,9 +223,19 @@ function CompanyCard({ company }: { company: Company }) {
 function DetailSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
-      <div className="h-32 animate-pulse rounded-lg border border-slate-200 bg-white" />
-      <div className="h-64 animate-pulse rounded-lg border border-slate-200 bg-white" />
+      <Skeleton variant="text" className="h-4 w-24" />
+      <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <Skeleton variant="text" className="h-7 w-2/3" />
+        <Skeleton variant="text" className="h-4 w-1/3" />
+        <div className="flex gap-2 pt-1">
+          <Skeleton variant="rect" className="h-6 w-24" />
+          <Skeleton variant="rect" className="h-6 w-20" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Skeleton variant="rect" className="h-48 w-full lg:col-span-2" />
+        <Skeleton variant="rect" className="h-40 w-full" />
+      </div>
     </div>
   );
 }

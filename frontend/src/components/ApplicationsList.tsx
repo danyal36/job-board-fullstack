@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin } from 'lucide-react';
+import { FileText, MapPin } from 'lucide-react';
 import { applicationsService } from '../services/applications.service';
 import { Badge } from './Badge';
+import { Skeleton } from './ui/Skeleton';
+import { EmptyState } from './ui/EmptyState';
 import { formatDate, formatJobType } from '../lib/format';
 import type { ApplicationStatus } from '../types';
 
@@ -36,8 +38,17 @@ export function ApplicationsList() {
   if (applications.length === 0) {
     return (
       <EmptyState
+        icon={<FileText className="h-8 w-8" />}
         title="No applications yet"
-        body="When you apply to a job it will show up here so you can track its status."
+        description="When you apply to a job it will show up here so you can track its status."
+        action={
+          <Link
+            to="/jobs"
+            className="inline-block rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+          >
+            Browse Jobs
+          </Link>
+        }
       />
     );
   }
@@ -87,23 +98,8 @@ function ListSkeleton() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="h-24 animate-pulse rounded-lg border border-slate-200 bg-white" />
+        <Skeleton key={i} variant="rect" className="h-24 w-full border border-slate-200 bg-white" />
       ))}
-    </div>
-  );
-}
-
-export function EmptyState({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-white p-12 text-center">
-      <p className="text-sm font-medium text-slate-900">{title}</p>
-      <p className="mt-1 text-sm text-slate-500">{body}</p>
-      <Link
-        to="/jobs"
-        className="mt-4 inline-block rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
-      >
-        Browse jobs
-      </Link>
     </div>
   );
 }

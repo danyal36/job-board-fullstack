@@ -64,7 +64,7 @@ export function ApplicationModal({ jobId, jobTitle, onClose }: Props) {
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-xl rounded-lg bg-white shadow-xl"
+        className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-y-auto rounded-lg bg-white shadow-xl"
       >
         <div className="flex items-start justify-between border-b border-slate-200 px-6 py-4">
           <div>

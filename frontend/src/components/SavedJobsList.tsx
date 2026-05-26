@@ -1,8 +1,10 @@
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
+import { Bookmark, Trash2 } from 'lucide-react';
 import { savedJobsService } from '../services/savedJobs.service';
 import { JobCard } from './JobCard';
-import { EmptyState } from './ApplicationsList';
+import { Skeleton } from './ui/Skeleton';
+import { EmptyState } from './ui/EmptyState';
 
 export function SavedJobsList() {
   const queryClient = useQueryClient();
@@ -31,8 +33,17 @@ export function SavedJobsList() {
   if (saved.length === 0) {
     return (
       <EmptyState
+        icon={<Bookmark className="h-8 w-8" />}
         title="No saved jobs"
-        body="Save jobs you're interested in to revisit them here later."
+        description="Save jobs you're interested in to revisit them here later."
+        action={
+          <Link
+            to="/jobs"
+            className="inline-block rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+          >
+            Browse Jobs
+          </Link>
+        }
       />
     );
   }
@@ -61,7 +72,7 @@ function ListSkeleton() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="h-32 animate-pulse rounded-lg border border-slate-200 bg-white" />
+        <Skeleton key={i} variant="rect" className="h-32 w-full border border-slate-200 bg-white" />
       ))}
     </div>
   );
