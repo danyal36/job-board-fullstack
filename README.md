@@ -1,5 +1,8 @@
 # Job Board — Full Stack Application
 
+> **Live Demo:** _link coming soon_
+> **API:** _link coming soon_
+
 ## Overview
 
 A full-stack job board application supporting employer and job seeker roles, built with React, Node.js, PostgreSQL, and OpenSearch. Employers can post and manage job listings; job seekers can search, filter, save, and apply to jobs.

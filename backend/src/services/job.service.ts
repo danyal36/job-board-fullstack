@@ -2,6 +2,7 @@ import type { QueryDslQueryContainer, SortCombinations } from '@elastic/elastics
 import { prisma } from '../config/database';
 import { elasticClient, JOB_INDEX } from '../config/elasticsearch';
 import { AppError } from '../middleware/error.middleware';
+import { searchFallback } from '../utils/searchFallback';
 import type { CreateJobInput, UpdateJobInput } from '../validators/job.validator';
 
 interface GetJobsParams {
@@ -77,6 +78,13 @@ export const getJobById = async (id: string) => {
 
 export const searchJobs = async (params: SearchJobsParams) => {
   const { query, location, type, remote, salaryMin, salaryMax, skills, page, limit } = params;
+
+  // In production without a hosted OpenSearch instance, skip the connection
+  // attempt entirely and serve results straight from PostgreSQL.
+  if (process.env.NODE_ENV === 'production' && !process.env.ELASTICSEARCH_URL) {
+    return searchFallback(params);
+  }
+
   const from = (page - 1) * limit;
 
   const must: QueryDslQueryContainer[] = [{ term: { status: 'ACTIVE' } }];
@@ -107,27 +115,34 @@ export const searchJobs = async (params: SearchJobsParams) => {
     });
   }
 
-  const response = await elasticClient.search({
-    index: JOB_INDEX,
-    from,
-    size: limit,
-    query: { bool: { must, filter } },
-    sort: [{ _score: 'desc' }, { createdAt: 'desc' }] as SortCombinations[],
-  });
+  try {
+    const response = await elasticClient.search({
+      index: JOB_INDEX,
+      from,
+      size: limit,
+      query: { bool: { must, filter } },
+      sort: [{ _score: 'desc' }, { createdAt: 'desc' }] as SortCombinations[],
+    });
 
-  const hits = response.hits.hits;
-  const total =
-    typeof response.hits.total === 'number'
-      ? response.hits.total
-      : (response.hits.total?.value ?? 0);
+    const hits = response.hits.hits;
+    const total =
+      typeof response.hits.total === 'number'
+        ? response.hits.total
+        : (response.hits.total?.value ?? 0);
 
-  return {
-    jobs: hits.map(h => h._source),
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
-  };
+    return {
+      jobs: hits.map(h => h._source),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  } catch {
+    // OpenSearch unreachable (connection refused, unavailable, etc.) — fall back
+    // to PostgreSQL so search keeps working. Response shape is identical.
+    console.warn('OpenSearch unavailable, falling back to PostgreSQL search');
+    return searchFallback(params);
+  }
 };
 
 export const createJob = async (data: CreateJobInput, userId: string) => {
