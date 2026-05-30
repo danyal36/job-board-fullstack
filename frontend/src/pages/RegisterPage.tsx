@@ -43,7 +43,7 @@ export default function RegisterPage() {
     defaultValues: { role: 'JOB_SEEKER' },
   });
 
-  const onSubmit = async ({ confirmPassword: _, ...values }: FormValues) => {
+  const onSubmit = async ({ confirmPassword: _confirmPassword, ...values }: FormValues) => {
     try {
       await registerUser(values);
       navigate('/jobs', { replace: true });

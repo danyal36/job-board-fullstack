@@ -1,107 +1,132 @@
-# Job Board — Full Stack
+# Job Board — Full Stack Application
 
-A production-grade full-stack job board with Elasticsearch-powered search, JWT authentication, and employer/job seeker roles.
+## Overview
+
+A full-stack job board application supporting employer and job seeker roles, built with React, Node.js, PostgreSQL, and OpenSearch. Employers can post and manage job listings; job seekers can search, filter, save, and apply to jobs.
 
 ## Tech Stack
 
-**Backend:** Node.js · Express · TypeScript · PostgreSQL · Prisma · Elasticsearch · JWT
-
-**Frontend:** React 18 · TypeScript · Tailwind CSS · React Query · Zustand · React Hook Form
-
-**DevOps:** Docker · GitHub Actions · CI/CD
+| Layer      | Technology                                       |
+|------------|--------------------------------------------------|
+| Frontend   | React 18, TypeScript, Tailwind CSS, Vite         |
+| Backend    | Node.js, Express, TypeScript                     |
+| Database   | PostgreSQL via Prisma ORM                        |
+| Search     | OpenSearch 3.x (Elasticsearch-compatible API)    |
+| Auth       | JWT (access + refresh tokens), bcryptjs          |
+| Validation | Zod (request validation on frontend and backend) |
+| Testing    | Vitest + React Testing Library, Jest + Supertest |
 
 ## Features
 
-- 🔍 Elasticsearch-powered job search with fuzzy matching and relevance scoring
-- 🔐 JWT authentication with access + refresh tokens
-- 👔 Employer dashboard — post, edit, manage jobs
-- 🎯 Job seeker dashboard — search, apply, track applications
-- 💼 Advanced filtering — location, salary, job type, skills, remote
-- 📊 Application status tracking
-- 🏢 Company profiles
+| Employer                              | Job Seeker                              |
+|---------------------------------------|-----------------------------------------|
+| Register and log in as employer       | Register and log in as job seeker       |
+| Create, edit, and delete job listings | Browse and search job listings          |
+| View applicant count per job          | Full-text search with OpenSearch        |
+| Employer dashboard with job table     | Filter by location, type, salary, skill |
+| Post jobs with rich field support     | Save jobs for later review              |
+|                                       | Apply to jobs with a cover letter       |
+|                                       | Track application status in dashboard   |
+
+## Architecture
+
+The React frontend communicates with an Express REST API over JSON. API routes pass through thin controllers into a service layer that holds all business logic. Prisma ORM manages all PostgreSQL interactions — no raw SQL. OpenSearch sits alongside PostgreSQL for full-text job search with relevance tuning, fuzziness, and field boosting on title, description, skills, and company name.
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 20+
-- Docker Desktop
 
-### 1. Clone and install
+- Node.js 18+
+- PostgreSQL (Docker Compose maps host port 5434 to container port 5432)
+- OpenSearch 3.x (or Elasticsearch 8.x) — Docker Compose maps host port 9201
+
+### Installation
+
 ```bash
-git clone https://github.com/danyal36/job-board-fullstack.git
+# 1. Clone the repository
+git clone <repo-url>
 cd job-board-fullstack
-npm install
-```
 
-### 2. Start infrastructure
-```bash
-docker-compose up -d
-```
+# 2. Install backend dependencies
+cd backend && npm install
 
-### 3. Set up backend environment
-```bash
-cd backend
-cp .env.example .env
-# Fill in your values
-npm run prisma:migrate
-```
+# 3. Install frontend dependencies
+cd ../frontend && npm install
 
-### 4. Start development servers
-```bash
-# From root
+# 4. Configure environment variables
+cd ../backend && cp .env.example .env   # edit values as needed
+cd ../frontend && cp .env.example .env  # edit values as needed
+
+# 5. Run database migrations
+cd backend && npx prisma migrate dev
+
+# 6. (Optional) Seed sample data
+npm run seed
+
+# 7. Start the backend dev server
 npm run dev
+
+# 8. In a separate terminal, start the frontend dev server
+cd ../frontend && npm run dev
 ```
 
-Backend runs on `http://localhost:5000`
-Frontend runs on `http://localhost:5173`
-Kibana (Elasticsearch UI) runs on `http://localhost:5601`
+The API runs on `http://localhost:5000` and the frontend on `http://localhost:5173` by default.
 
-## API Endpoints
+### Environment Variables
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | /api/auth/register | Register user | — |
-| POST | /api/auth/login | Login | — |
-| GET | /api/auth/me | Get current user | ✅ |
-| GET | /api/jobs | List jobs (paginated) | — |
-| GET | /api/jobs/search | Search jobs (Elasticsearch) | — |
-| GET | /api/jobs/:id | Get job by ID | — |
-| POST | /api/jobs | Create job | ✅ Employer |
-| PUT | /api/jobs/:id | Update job | ✅ Employer |
-| DELETE | /api/jobs/:id | Delete job | ✅ Employer |
+**backend/.env**
+
+| Variable             | Description                          | Example                                    |
+|----------------------|--------------------------------------|--------------------------------------------|
+| `DATABASE_URL`       | PostgreSQL connection string         | `postgresql://user:pass@localhost:5434/db` |
+| `ELASTICSEARCH_URL`  | OpenSearch / Elasticsearch endpoint  | `http://localhost:9201`                    |
+| `JWT_SECRET`         | Secret for access token signing      | `a-long-random-string`                     |
+| `JWT_REFRESH_SECRET` | Secret for refresh token signing     | `another-long-random-string`               |
+| `PORT`               | Port for the Express server          | `5000`                                     |
+| `CLIENT_URL`         | Allowed CORS origin                  | `http://localhost:5173`                    |
+
+**frontend/.env**
+
+| Variable       | Description          | Example                     |
+|----------------|----------------------|-----------------------------|
+| `VITE_API_URL` | Backend API base URL | `http://localhost:5000/api` |
+
+## Running Tests
+
+```bash
+# Frontend (Vitest + React Testing Library)
+cd frontend
+npm test            # single run
+npm run test:watch  # watch mode
+
+# Backend (Jest + Supertest)
+cd backend
+npm test
+```
 
 ## Project Structure
 
 ```
 job-board-fullstack/
-├── backend/
-│   ├── src/
-│   │   ├── config/         # DB + Elasticsearch setup
-│   │   ├── controllers/    # Thin route handlers
-│   │   ├── services/       # Business logic
-│   │   ├── routes/         # Express routes
-│   │   └── middleware/     # Auth, error handling
-│   └── prisma/
-│       └── schema.prisma   # Database schema
 ├── frontend/
 │   └── src/
-│       ├── components/     # Reusable UI
-│       ├── pages/          # Route pages
-│       ├── services/       # API layer
-│       ├── store/          # Zustand state
-│       └── types/          # TypeScript interfaces
-├── docker-compose.yml
-├── CLAUDE.md               # AI assistant context
-└── AGENTS.md               # AI agent workflow rules
+│       ├── components/   # Reusable UI components and error boundaries
+│       ├── pages/        # Route-level page components
+│       ├── hooks/        # Custom React hooks (useDebounce, etc.)
+│       ├── services/     # API call functions — all fetch logic lives here
+│       ├── types/        # Shared TypeScript interfaces
+│       └── utils/        # Helper functions
+├── backend/
+│   └── src/
+│       ├── routes/       # Express route definitions
+│       ├── controllers/  # Thin request handlers — extract data, call services
+│       ├── services/     # Business logic and database operations
+│       ├── middleware/   # Auth, error handling, not-found handler
+│       ├── config/       # Database, OpenSearch, and env setup
+│       └── validators/   # Zod schemas for request validation
+└── docker-compose.yml    # PostgreSQL and OpenSearch containers
 ```
 
-## Daily Development Log
+## Screenshots
 
-| Day | Feature |
-|-----|---------|
-| 1 | Project scaffold, auth backend, Elasticsearch config, Prisma schema |
-| 2 | Job CRUD + Elasticsearch indexing |
-| 3 | Frontend scaffold + job listing UI |
-| 4 | Search UI + filters |
-| 5 | Applications feature |
-| ... | ... |
+> Screenshots coming soon — run locally to preview.

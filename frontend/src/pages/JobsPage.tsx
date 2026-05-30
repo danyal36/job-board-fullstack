@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { SearchX, SlidersHorizontal, X } from 'lucide-react';
 import { jobsService } from '../services/jobs.service';
@@ -34,7 +34,10 @@ export default function JobsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const debouncedQuery = useDebounce(query, 400);
 
-  useEffect(() => { setPage(1); }, [debouncedQuery]);
+  const handleQueryChange = (q: string) => {
+    setQuery(q);
+    setPage(1);
+  };
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['jobs-search', debouncedQuery, filters, page],
@@ -60,7 +63,7 @@ export default function JobsPage() {
         </p>
       </header>
 
-      <SearchBar value={query} onChange={setQuery} />
+      <SearchBar value={query} onChange={handleQueryChange} />
 
       {/* Mobile filter trigger */}
       <button
