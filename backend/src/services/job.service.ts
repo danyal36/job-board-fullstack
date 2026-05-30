@@ -59,7 +59,7 @@ export const getJobsByOwner = async (userId: string) => {
   });
 
   return {
-    jobs: jobs.map(j => {
+    jobs: jobs.map((j: (typeof jobs)[number]) => {
       const { _count, ...rest } = j;
       return { ...rest, applicantCount: _count.applications };
     }),
