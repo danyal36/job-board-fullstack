@@ -1,7 +1,7 @@
 # Job Board — Full Stack Application
 
-> **Live Demo:** _link coming soon_
-> **API:** _link coming soon_
+> **Live Demo:** https://job-board-fullstack-frontend.vercel.app
+> **API:** https://job-board-fullstack-xkyf.onrender.com/api
 
 ## Overview
 
